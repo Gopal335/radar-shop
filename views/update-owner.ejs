@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <h2>Enter shop name to update</h2>
+    <form action="/updated-owner" method="POST">
+        <input type="hidden" name="shopId" value="<%=shop._id%>">
+        <input type="text" name="shopName" value="<%=shop.shopName%>" >
+        <input type="text" name="ownerName" value="<%=shop.ownerName%>" >
+        <input type="email" name="email" value="<%=shop.email%>">
+        <input type="number" name="phone" value="<%=shop.phone%>">
+        <input type="password" name="password" value="<%= shop.password %>">
+        <button>Update shop</button>
+    </form>
+    
+</body>
+</html>
