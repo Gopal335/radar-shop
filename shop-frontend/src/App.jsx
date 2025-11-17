@@ -4,7 +4,7 @@ import LoginPage from './components/LoginPage'
 import HomePage from './components/HomePage'
 import { useEffect, useState } from 'react'
 import StoreProducts from './components/StoreProducts'
-
+import { apiFetch } from '../utils/api';
 import ProductsCart from './components/ProductCart'
 import UserDetails from './components/UserDetails'
 import OwnerDetails from './components/OwnerDetails'
@@ -26,7 +26,7 @@ function App() {
 
   useEffect(() => {
     
-    fetch("/api/find-owner", {
+    apiFetch("/api/find-owner", {
       method: "POST", // since your backend uses POST
       headers: {
         "Content-Type": "application/json"
