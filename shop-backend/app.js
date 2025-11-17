@@ -46,6 +46,13 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+app.use(cors({
+  origin: process.env.CLIENT_ORIGIN || '*',
+  credentials: true
+}));
+
+module.exports = app;
+
 
 // app.post('/register', async (req, res) => {
 //   try {
