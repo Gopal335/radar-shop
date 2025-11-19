@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { uploadImageFile } from "../utils/upload";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+
 export default function RegistrationPage({ setRegistrationPage }) {
   const [role, setRole] = useState("owner");
   const [shopName, setShop] = useState("");
@@ -76,7 +78,7 @@ export default function RegistrationPage({ setRegistrationPage }) {
       body = { name, email, phone, password };
     }
 
-      const res = await fetch(url, {
+      const res = await fetch(BASE_URL + url, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
