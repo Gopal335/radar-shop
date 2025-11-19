@@ -1,66 +1,48 @@
 
-const express=require('express');
-const app=express();
-const morgan=require('morgan');
-const connectDB=require('./config/ownerdb');
-const ownerModel = require('./models/owner');
-const cors = require('cors');
-const userModel=require('./models/users');
-const cartModel= require('./models/cart');
-const bcrypt= require('bcrypt');
-require('dotenv').config();
+const express = require("express");
+const app = express();
+const morgan = require("morgan");
+const connectDB = require("./config/ownerdb");
+const cors = require("cors");
+require("dotenv").config();
 
-app.set('view engine', 'ejs')
-
+// CONNECT DB
 connectDB();
 
+// CORRECT CORS SETUP — WORKS FOR VERCEL
 const corsOptions = {
-  origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173', // frontend origin
-  credentials: true,  // allow cookies
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: [
+    "https://radar-shop-app.vercel.app",
+    "http://localhost:5173"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
+
 app.use(cors(corsOptions));
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Radar Shop Backend API running' });
-});
-
-app.listen(process.env.PORT || 5000, () => {
-  console.log(`Server running on port ${process.env.PORT || 5000}`);
-});
-
-//built-in middleware
+// BUILT-IN MIDDLEWARE must come BEFORE routes
 app.use(express.json());
-app.use(express.urlencoded({extended:true}));
-app.use(express.static("public"));
-app.use(cors());
+app.use(express.urlencoded({ extended: true }));
 
-const authRoutes = require('./routes/auth');
-const ownerRoutes = require('./routes/owners');
-const userRoutes = require('./routes/users');
-const cartRoutes = require('./routes/cart');
-const uploadRoutes = require('./routes/upload');
+// ROUTES
+app.use("/api", require("./routes/auth"));
+app.use("/api", require("./routes/owners"));
+app.use("/api", require("./routes/users"));
+app.use("/api", require("./routes/cart"));
+app.use("/api", require("./routes/upload"));
 
+// TEST ROUTE
+app.get("/", (req, res) => {
+  res.json({ message: "Radar Shop Backend API running" });
+});
 
-app.use('/api', authRoutes);
-app.use('/api', ownerRoutes);
-app.use('/api', userRoutes);
-app.use('/api', cartRoutes);
-app.use('/api', uploadRoutes);
-
-
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}
-
-// app.use(cors({
-//   origin: process.env.CLIENT_ORIGIN || '*',
-//   credentials: true
-// }));
+// START SERVER (only once)
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 module.exports = app;
 

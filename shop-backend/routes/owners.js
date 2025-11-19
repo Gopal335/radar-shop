@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const owners = require('../controllers/ownersControllers');
 
-router.post('/find-owner', owners.findOwners);
+router.get('/find-owner', owners.findOwners);
 router.post('/add-product', owners.addProduct);
 router.delete('/delete-product', owners.deleteProduct);
 router.put('/edit-product', owners.editProduct);
