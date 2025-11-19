@@ -1,7 +1,7 @@
 import { useState } from "react";
 import AddProduct from "./AddProduct";
 import StoreProducts from "./StoreProducts";
-
+import { apiFetch } from "../utils/api";
 
 export default function LoginPage({ setLogedinPage, setSelectedShop, setLogedIn, logedIn, shop, loginType, setLoginType, setUser}) {
   const [addProduct, setAddProduct] = useState(false);
@@ -22,7 +22,7 @@ export default function LoginPage({ setLogedinPage, setSelectedShop, setLogedIn,
 
   try {
     if (loginType === "owner") {
-      const res = await fetch("/api/login", {
+      const res = await apiFetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ownerName, password })
