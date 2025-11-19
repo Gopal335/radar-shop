@@ -26,7 +26,7 @@ function App() {
 
  useEffect(() => {
   apiFetch("/api/find-owner", {
-    method: "POST",
+    method: "GET",
     headers: { "Content-Type": "application/json" },
     credentials: 'include'
   })

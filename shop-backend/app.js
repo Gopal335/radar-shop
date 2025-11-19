@@ -9,18 +9,18 @@ require("dotenv").config();
 // CONNECT DB
 connectDB();
 
-// CORRECT CORS SETUP — WORKS FOR VERCEL
 const corsOptions = {
   origin: [
-    "https://radar-shop-app.vercel.app",
+    "https://radar-shop-6wlhsvknp-gopals-projects-ecd583d1.vercel.app",
     "http://localhost:5173"
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
+
+
 
 // BUILT-IN MIDDLEWARE must come BEFORE routes
 app.use(express.json());
