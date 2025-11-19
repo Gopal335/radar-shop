@@ -1,9 +1,9 @@
 export const API_BASE = import.meta.env.VITE_API_URL || '/api';
-
+import { apiFetch } from "./api";
 export async function uploadImageFile(file) {
   const fd = new FormData();
   fd.append('image', file);
-  const res = await fetch(`/api/upload`, {
+  const res = await apiFetch(`/api/upload`, {
     method: 'POST',
     body: fd,
     credentials: 'include' // if you use sessions

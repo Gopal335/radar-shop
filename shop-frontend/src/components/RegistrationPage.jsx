@@ -1,19 +1,3 @@
-import { useState } from "react";
-import { uploadImageFile } from "../utils/upload";
-
-const BASE_URL = import.meta.env.VITE_API_URL;
-
-export default function RegistrationPage({ setRegistrationPage }) {
-  const [role, setRole] = useState("owner");
-  const [shopName, setShop] = useState("");
-  const [ownerName, setOwner] = useState("");
-  const [password, setPassword] = useState("");
-  const [imageFile, setImageFile] = useState(null);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [image_url, setimage_url] = useState("");
-  const [errors, setErrors] = useState({});
 
   import { useState } from "react";
 import { uploadImageFile } from "../utils/upload";
@@ -122,6 +106,7 @@ export default function RegistrationPage({ setRegistrationPage }) {
   };
 
   
+
 
 
   return (
