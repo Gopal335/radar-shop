@@ -1,68 +1,68 @@
 
-const express=require('express');
-const app=express();
-const morgan=require('morgan');
-const connectDB=require('./config/ownerdb');
-const ownerModel = require('./models/owner');
-const cors = require('cors');
-const userModel=require('./models/users');
-const cartModel= require('./models/cart');
-const bcrypt= require('bcrypt');
-require('dotenv').config();
+const express = require("express");
+const app = express();
+const morgan = require("morgan");
+const connectDB = require("./config/ownerdb");
+const ownerModel = require("./models/owner");
+const userModel = require("./models/users");
+const cartModel = require("./models/cart");
+const bcrypt = require("bcrypt");
+const cors = require("cors");
+require("dotenv").config();
 
-app.set('view engine', 'ejs')
+app.set("view engine", "ejs");
 
+// CONNECT DB
 connectDB();
 
+// ⭐ Correct CORS configuration
+const allowedOrigins = [
+  "https://radar-shop-app.vercel.app", // your production frontend
+  "http://localhost:5173", // development
+];
+
 const corsOptions = {
-  origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173', // frontend origin
-  credentials: true,  // allow cookies
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Blocked by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
+
+// ⭐ Apply CORS before everything else
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // handle preflight
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Radar Shop Backend API running' });
-});
-
-app.listen(process.env.PORT || 5000, () => {
-  console.log(`Server running on port ${process.env.PORT || 5000}`);
-});
-
-//built-in middleware
+// MIDDLEWARE
 app.use(express.json());
-app.use(express.urlencoded({extended:true}));
-app.use(express.static("public"));
-app.use(cors());
+app.use(express.urlencoded({ extended: true }));
 
-const authRoutes = require('./routes/auth');
-const ownerRoutes = require('./routes/owners');
-const userRoutes = require('./routes/users');
-const cartRoutes = require('./routes/cart');
-const uploadRoutes = require('./routes/upload');
+// Routes
+const authRoutes = require("./routes/auth");
+const ownerRoutes = require("./routes/owners");
+const userRoutes = require("./routes/users");
+const cartRoutes = require("./routes/cart");
+const uploadRoutes = require("./routes/upload");
 
+app.use("/api", authRoutes);
+app.use("/api", ownerRoutes);
+app.use("/api", userRoutes);
+app.use("/api", cartRoutes);
+app.use("/api", uploadRoutes);
 
-app.use('/api', authRoutes);
-app.use('/api', ownerRoutes);
-app.use('/api', userRoutes);
-app.use('/api', cartRoutes);
-app.use('/api', uploadRoutes);
+// Default route
+app.get("/", (req, res) => {
+  res.json({ message: "Radar Shop Backend API running" });
+});
 
-
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}
-
-// app.use(cors({
-//   origin: process.env.CLIENT_ORIGIN || '*',
-//   credentials: true
-// }));
-
+// ⭐ Vercel serverless export — NO app.listen()
 module.exports = app;
+
 
 
 // app.post('/register', async (req, res) => {
