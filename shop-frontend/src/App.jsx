@@ -25,7 +25,7 @@ function App() {
  
 
  useEffect(() => {
-  apiFetch("https://radar-shop-2.onrender.com/api/find-owner", {
+  apiFetch("/api/find-owner", {
     method: "GET",
     headers: { "Content-Type": "application/json" },
     credentials: 'include'
