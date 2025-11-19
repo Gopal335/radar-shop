@@ -38,7 +38,7 @@ export default function LoginPage({ setLogedinPage, setSelectedShop, setLogedIn,
       setSelectedShop(data.owner);
       setLogedIn();
     } else {
-      const res = await fetch("/api/login-user", {
+      const res = await apiFetch("/api/login-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: ownerName, password })
