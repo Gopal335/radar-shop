@@ -4,7 +4,7 @@ import LoginPage from './components/LoginPage'
 import HomePage from './components/HomePage'
 import { useEffect, useState } from 'react'
 import StoreProducts from './components/StoreProducts'
-import { apiFetch } from '../utils/api';
+import { apiFetch } from './utils/api';
 import ProductsCart from './components/ProductCart'
 import UserDetails from './components/UserDetails'
 import OwnerDetails from './components/OwnerDetails'
@@ -21,7 +21,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [cartList, setCartList] = useState(false);
   const [userIcon, setUserIcon] = useState(false);
-  const [ownerIcon, setOwnerIcon] = useState(false);
+  const [ownerIcon, setOwnerIcon] = useState(false); 
  
 
  useEffect(() => {
