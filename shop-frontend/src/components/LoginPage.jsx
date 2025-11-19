@@ -22,47 +22,42 @@ export default function LoginPage({ setLogedinPage, setSelectedShop, setLogedIn,
 
   try {
     if (loginType === "owner") {
-      const res = await apiFetch("/api/login", {
+      // ✅ Owner login using apiFetch (correct)
+      const data = await apiFetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ownerName, password })
+        body: JSON.stringify({ ownerName, password }),
+        credentials: "include"
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || "Login failed");
-        return;
-      }
-
+      // success → data = parsed JSON already
       setSelectedShop(data.owner);
       setLogedIn();
+
     } else {
-      const res = await apiFetch("/api/login-user", {
+      // ✅ User login using apiFetch (correct)
+      const data = await apiFetch("/api/login-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: ownerName, password })
+        body: JSON.stringify({ name: ownerName, password }),
+        credentials: "include"
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || "Login failed");
-        return;
-      }
 
       setUser(data.user);
       setLogedIn();
       setLogedinPage();
     }
 
+    // Reset fields
     setOwnerName("");
     setPassword("");
+
   } catch (err) {
     console.error("Error logging in:", err);
-    alert("Server error. Please try again later.");
+    alert(err.body || "Server error. Please try again later.");
   }
 };
+
 
 
   
