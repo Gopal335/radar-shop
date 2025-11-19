@@ -14,10 +14,21 @@ app.set('view engine', 'ejs')
 
 connectDB();
 
+const corsOptions = {
+  origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173', // frontend origin
+  credentials: true,  // allow cookies
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+app.use(cors(corsOptions));
 
-// app.listen(process.env.PORT || 5000, () => {
-//   console.log(`Server running on port ${process.env.PORT || 5000}`);
-// });
+app.get('/', (req, res) => {
+  res.json({ message: 'Radar Shop Backend API running' });
+});
+
+app.listen(process.env.PORT || 5000, () => {
+  console.log(`Server running on port ${process.env.PORT || 5000}`);
+});
 
 //built-in middleware
 app.use(express.json());
@@ -46,10 +57,10 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-app.use(cors({
-  origin: process.env.CLIENT_ORIGIN || '*',
-  credentials: true
-}));
+// app.use(cors({
+//   origin: process.env.CLIENT_ORIGIN || '*',
+//   credentials: true
+// }));
 
 module.exports = app;
 
