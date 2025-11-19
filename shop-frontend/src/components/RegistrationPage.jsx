@@ -15,37 +15,50 @@ export default function RegistrationPage({ setRegistrationPage }) {
   const [image_url, setimage_url] = useState("");
   const [errors, setErrors] = useState({});
 
+  import { useState } from "react";
+import { uploadImageFile } from "../utils/upload";
+
+const BASE_URL =
+  import.meta.env.VITE_API_URL || "https://radar-shop-2.onrender.com";
+
+export default function RegistrationPage({ setRegistrationPage }) {
+  const [role, setRole] = useState("owner");
+  const [shopName, setShop] = useState("");
+  const [ownerName, setOwner] = useState("");
+  const [password, setPassword] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [image_url, setimage_url] = useState("");
+  const [errors, setErrors] = useState({});
+
   const validateFields = () => {
     const newErrors = {};
 
     if (role === "owner") {
       if (!shopName.trim()) newErrors.shopName = "Shop name is required";
       if (shopName.length < 2) newErrors.shopName = "Shop name must be at least 2 characters long";
+
       if (!ownerName.trim()) newErrors.ownerName = "Owner name is required";
       if (ownerName.length < 2) newErrors.ownerName = "Owner name must be at least 2 characters long";
+
+      if (!email) newErrors.email = "Email is required";
+
       if (!password) newErrors.password = "Password is required";
       else if (password.length < 8)
         newErrors.password = "Password must be at least 8 characters long";
-      else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(password))
-        newErrors.password =
-          "Password must contain at least one uppercase letter, one lowercase letter, and one number";
-      // if (image_url && !/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(image_url))
-      //   newErrors.image_url = "Please enter a valid image URL";
     } else {
       if (!name.trim()) newErrors.name = "Name is required";
       if (name.length < 2) newErrors.name = "Name must be at least 2 characters long";
+
       if (!email) newErrors.email = "Email is required";
-      else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email))
-        newErrors.email = "Please enter a valid email address";
+
       if (!phone) newErrors.phone = "Phone number is required";
-      else if (!/^\+?\d{10,15}$/.test(phone))
-        newErrors.phone = "Please enter a valid phone number (10–15 digits)";
+
       if (!password) newErrors.password = "Password is required";
       else if (password.length < 8)
         newErrors.password = "Password must be at least 8 characters long";
-      else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(password))
-        newErrors.password =
-          "Password must contain at least one uppercase letter, one lowercase letter, and one number";
     }
 
     setErrors(newErrors);
@@ -54,45 +67,43 @@ export default function RegistrationPage({ setRegistrationPage }) {
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    if (!validateFields()) return;
 
-    if (!validateFields()) return; // Stop submission if validation fails
-   try{
-   let image_url_to_send = image_url;
-    if (imageFile) {
-      try {
+    try {
+      let image_url_to_send = image_url;
+
+      if (imageFile) {
         image_url_to_send = await uploadImageFile(imageFile);
-      } catch (upErr) {
-        console.error("Image upload failed:", upErr);
-        setErrors({ server: "Image upload failed. Please try again." });
-        return;
       }
-    }
 
-    let url = "";
-    let body = {};
-    if (role === "owner") {
-      url = "/api/register";
-      body = { shopName, ownerName, email, phone, image_url: image_url_to_send, password };
-    } else {
-      url = "/api/register-user";
-      body = { name, email, phone, password };
-    }
+      let endpoint = "";
+      let body = {};
 
-      const res = await fetch(BASE_URL + url, {
+      if (role === "owner") {
+        endpoint = "/api/register";
+        body = { shopName, ownerName, email, phone, image_url: image_url_to_send, password };
+      } else {
+        endpoint = "/api/register-user";
+        body = { name, email, phone, password };
+      }
+
+      const res = await fetch(BASE_URL + endpoint, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // important for cookies
         body: JSON.stringify(body),
       });
 
       const data = await res.json();
-      console.log("response:", data);
 
       if (!res.ok) {
         setErrors({ server: data.message || "Registration failed" });
         return;
       }
 
-      // reset form
+      // Reset
       setShop("");
       setOwner("");
       setPassword("");
@@ -100,16 +111,18 @@ export default function RegistrationPage({ setRegistrationPage }) {
       setEmail("");
       setPhone("");
       setimage_url("");
-      setimage_url("");
       setImageFile(null);
       setErrors({});
       setRegistrationPage();
-    } 
-    catch (err) {
-      console.error("Error registering:", err);
+
+    } catch (err) {
+      console.error("Registration error:", err);
       setErrors({ server: "Network or server error" });
     }
   };
+
+  
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 relative overflow-hidden">
