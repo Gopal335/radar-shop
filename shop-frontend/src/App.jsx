@@ -24,21 +24,18 @@ function App() {
   const [ownerIcon, setOwnerIcon] = useState(false);
  
 
-  useEffect(() => {
-    
-    apiFetch("/api/find-owner", {
-      method: "POST", // since your backend uses POST
-      headers: {
-        "Content-Type": "application/json"
-      }
+ useEffect(() => {
+  apiFetch("/api/find-owner", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: 'include'
+  })
+    .then((data) => {
+      console.log("Fetched shops:", data);
+      setShops(data);
     })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Fetched shops:", data); // check in browser console
-        setShops(data);
-      })
-      .catch((err) => console.error("Error fetching shops:", err));
-  }, []);
+    .catch((err) => console.error("Error fetching shops:", err));
+}, []);
 
   function returnHome(){
     setLogedinPage(false);
