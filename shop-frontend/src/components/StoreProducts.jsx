@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+
+import { useState } from "react";
 import { uploadImageFile } from "../utils/upload";
+import { apiFetch } from "../utils/api";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "";
-
-export default function StoreProducts({ shop, goBack }) {
+export default function StoreProducts({ shop, logedIn, loginType, user }) {
   const [products, setProducts] = useState(shop?.products || []);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editedData, setEditedData] = useState({
@@ -13,8 +13,8 @@ export default function StoreProducts({ shop, goBack }) {
   });
   const [newImageFile, setNewImageFile] = useState(null);
 
-  // Handle click on Edit button
-  const startEditing = (product) => {
+  // Begin editing UI
+  const handleEditStart = (product) => {
     setEditingProduct(product.productName);
     setEditedData({
       productName: product.productName,
@@ -24,50 +24,46 @@ export default function StoreProducts({ shop, goBack }) {
     setNewImageFile(null);
   };
 
-  // DELETE PRODUCT HANDLER (matches backend route /api/delete-product)
+  // Delete product (calls backend /api/delete-product)
   const handleDelete = async (productName) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
 
     try {
-      const res = await fetch(`${BASE_URL}/api/delete-product`, {
+      const data = await apiFetch("/api/delete-product", {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          shopId: shop._id,
-          productName,
-        }),
+        body: JSON.stringify({ shopId: shop._id, productName }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Delete failed");
-
-      alert("Product deleted successfully");
-
+      // apiFetch returns parsed JSON when success
       setProducts(data.shop.products);
-      shop.products = data.shop.products;
+      // keep parent shop in sync if needed
+      if (shop) shop.products = data.shop.products;
+      alert("Product deleted successfully");
     } catch (err) {
-      console.error("Delete error:", err);
-      alert("Failed to delete product");
+      // apiFetch throws with err.body containing server text when non-OK
+      console.error("Error deleting product:", err);
+      alert(
+        "Failed to delete product:\n" +
+          (err.body || err.message || "Server or network error")
+      );
     }
   };
 
-  // SAVE EDITED PRODUCT (matches backend route /api/edit-product)
+  // Save edited product (calls /api/edit-product)
   const handleSave = async () => {
-    let finalImageURL = editedData.image_url;
-
     try {
+      // if user selected a new image, upload it first
+      let finalImageURL = editedData.image_url;
       if (newImageFile) {
+        // uploadImageFile returns a string URL (your upload util does that)
         finalImageURL = await uploadImageFile(newImageFile);
       }
 
-      const res = await fetch(`${BASE_URL}/api/edit-product`, {
+      const data = await apiFetch("/api/edit-product", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           shopId: shop._id,
@@ -78,45 +74,51 @@ export default function StoreProducts({ shop, goBack }) {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Update failed");
-
-      alert("Product updated successfully");
-
       setProducts(data.shop.products);
-      shop.products = data.shop.products;
-
+      if (shop) shop.products = data.shop.products;
       setEditingProduct(null);
+      setNewImageFile(null);
+      alert("Product updated successfully");
     } catch (err) {
-      console.error("Edit error:", err);
-      alert("Failed to update product");
+      console.error("Error editing product:", err);
+      alert(
+        "Failed to update product:\n" +
+          (err.body || err.message || "Server or network error")
+      );
     }
   };
 
-  // ADD TO CART (this route was already correct)
+  // Add to cart (example - adjust payload if your backend expects different shape)
   const addToCart = async (product) => {
+    if (!logedIn) {
+      alert("Please login to add product");
+      return;
+    }
     try {
-      const res = await fetch(`${BASE_URL}/api/add-to-cart`, {
+      const data = await apiFetch("/api/add-to-cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
+          userName: user?.name,
+          shopName: shop?.shopName,
           productName: product.productName,
-          image_url: product.image_url,
           price: product.price,
-          shopId: shop._id,
+          image_url: product.image_url,
         }),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to add");
-
-      alert("Product added to cart");
+      alert("Added to cart successfully");
+      console.log("add-to-cart response:", data);
     } catch (err) {
-      console.error("Add-to-cart error:", err);
+      console.error("Add to cart error:", err);
+      alert("Failed to add to cart:\n" + (err.body || err.message));
     }
   };
-    // const [addProduct, setAddProduct] = useState(false);
+
+
+
+
+  
     return(
         <>
       {logedIn ? (
