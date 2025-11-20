@@ -1,9 +1,8 @@
 
-  import { useState } from "react";
+ import { useState } from "react";
 import { uploadImageFile } from "../utils/upload";
 
-const BASE_URL =
-  import.meta.env.VITE_API_URL || "https://radar-shop-2.onrender.com";
+const BASE_URL = import.meta.env.VITE_API_URL || "";
 
 export default function RegistrationPage({ setRegistrationPage }) {
   const [role, setRole] = useState("owner");
@@ -14,7 +13,6 @@ export default function RegistrationPage({ setRegistrationPage }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [image_url, setimage_url] = useState("");
   const [errors, setErrors] = useState({});
 
   const validateFields = () => {
@@ -22,24 +20,16 @@ export default function RegistrationPage({ setRegistrationPage }) {
 
     if (role === "owner") {
       if (!shopName.trim()) newErrors.shopName = "Shop name is required";
-      if (shopName.length < 2) newErrors.shopName = "Shop name must be at least 2 characters long";
-
       if (!ownerName.trim()) newErrors.ownerName = "Owner name is required";
-      if (ownerName.length < 2) newErrors.ownerName = "Owner name must be at least 2 characters long";
-
       if (!email) newErrors.email = "Email is required";
-
+      if (!phone) newErrors.phone = "Phone number is required";
       if (!password) newErrors.password = "Password is required";
       else if (password.length < 8)
         newErrors.password = "Password must be at least 8 characters long";
     } else {
       if (!name.trim()) newErrors.name = "Name is required";
-      if (name.length < 2) newErrors.name = "Name must be at least 2 characters long";
-
       if (!email) newErrors.email = "Email is required";
-
-      if (!phone) newErrors.phone = "Phone number is required";
-
+      if (!phone) newErrors.phone = "Phone is required";
       if (!password) newErrors.password = "Password is required";
       else if (password.length < 8)
         newErrors.password = "Password must be at least 8 characters long";
@@ -54,10 +44,10 @@ export default function RegistrationPage({ setRegistrationPage }) {
     if (!validateFields()) return;
 
     try {
-      let image_url_to_send = image_url;
+      let uploadedImageUrl = "";
 
       if (imageFile) {
-        image_url_to_send = await uploadImageFile(imageFile);
+        uploadedImageUrl = await uploadImageFile(imageFile);
       }
 
       let endpoint = "";
@@ -65,7 +55,14 @@ export default function RegistrationPage({ setRegistrationPage }) {
 
       if (role === "owner") {
         endpoint = "/api/register";
-        body = { shopName, ownerName, email, phone, image_url: image_url_to_send, password };
+        body = {
+          shopName,
+          ownerName,
+          email,
+          phone,
+          image_url: uploadedImageUrl,
+          password,
+        };
       } else {
         endpoint = "/api/register-user";
         body = { name, email, phone, password };
@@ -73,10 +70,8 @@ export default function RegistrationPage({ setRegistrationPage }) {
 
       const res = await fetch(BASE_URL + endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // important for cookies
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(body),
       });
 
@@ -87,16 +82,16 @@ export default function RegistrationPage({ setRegistrationPage }) {
         return;
       }
 
-      // Reset
+      // reset all
       setShop("");
       setOwner("");
       setPassword("");
       setName("");
       setEmail("");
       setPhone("");
-      setimage_url("");
       setImageFile(null);
       setErrors({});
+
       setRegistrationPage();
 
     } catch (err) {
@@ -104,6 +99,8 @@ export default function RegistrationPage({ setRegistrationPage }) {
       setErrors({ server: "Network or server error" });
     }
   };
+
+  
 
   
 

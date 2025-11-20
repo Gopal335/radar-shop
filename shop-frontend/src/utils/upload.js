@@ -1,20 +1,17 @@
-import { apiFetch } from "./api";
-
-// Uses your backend route: POST /api/upload
+// utils/upload.js
 export async function uploadImageFile(file) {
   const fd = new FormData();
-  fd.append("image", file);   // MUST be "image" because multer expects .single("image")
+  fd.append("image", file); // multer expects "image"
 
-  const res = await fetch(
-    `${import.meta.env.VITE_API_URL}/api/upload`,
-    {
-      method: "POST",
-      body: fd,
-      credentials: "include"
-    }
-  );
+  const apiURL = import.meta.env.VITE_API_URL || "";
+
+  const res = await fetch(`${apiURL}/api/upload`, {
+    method: "POST",
+    body: fd
+  });
 
   const text = await res.text();
+
   if (!res.ok) {
     throw new Error(`Upload failed: ${text}`);
   }
@@ -23,9 +20,8 @@ export async function uploadImageFile(file) {
   try {
     data = JSON.parse(text);
   } catch {
-    throw new Error("Invalid JSON from upload API");
+    throw new Error("Invalid JSON response from upload API");
   }
 
-  // backend returns { url, public_id }
-  return { url: data.url };
+  return data.url; // return only URL
 }
