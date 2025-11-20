@@ -1,94 +1,119 @@
-import { useState } from "react";
-import { apiFetch, API_BASE } from "../utils/api";
+import { useEffect, useState } from "react";
+import { uploadImageFile } from "../utils/upload";
 
-export default function StoreProducts({ shop, logedIn, loginType, user }) {
-  const [products, setProducts] = useState(shop.products || []);
+const BASE_URL = import.meta.env.VITE_API_URL || "";
+
+export default function StoreProducts({ shop, goBack }) {
+  const [products, setProducts] = useState(shop?.products || []);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editedData, setEditedData] = useState({
     productName: "",
     price: "",
     image_url: "",
   });
+  const [newImageFile, setNewImageFile] = useState(null);
 
-  // ✅ Add to cart (uses backend route from users.js)
-  const addToCart = async (product) => {
-    if (!logedIn) {
-      alert("Please login to add product");
-      return;
-    }
-
-    try {
-      const data = await apiFetch("/api/add-to-cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userName: user.name,
-          shopName: shop.shopName,
-          productName: product.productName,
-          price: product.price,
-          image_url: product.image_url,
-        }),
-      });
-
-      alert("Added to cart successfully!");
-      console.log(data);
-    } catch (err) {
-      console.error("Add to cart error:", err);
-      alert("Failed to add to cart");
-    }
-  };
-
-  // ❌ DELETE PRODUCT (correct URL + apiFetch)
-  const handleDelete = async (productName) => {
-    if (!window.confirm("Are you sure you want to delete this product?"))
-      return;
-
-    try {
-      const data = await apiFetch("/api/delete-product", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shopId: shop._id, productName }),
-      });
-
-      alert("Product deleted successfully");
-      setProducts(data.shop.products);
-      shop.products = data.shop.products; // keep UI consistent
-    } catch (err) {
-      console.error("Error deleting product:", err);
-      alert("Failed to delete product");
-    }
-  };
-
-  // ✏️ EDIT PRODUCT DATA
-  const handleEdit = (product) => {
+  // Handle click on Edit button
+  const startEditing = (product) => {
     setEditingProduct(product.productName);
     setEditedData({
       productName: product.productName,
       price: product.price,
       image_url: product.image_url,
     });
+    setNewImageFile(null);
   };
 
-  // 💾 SAVE PRODUCT (correct URL + apiFetch)
-  const handleSave = async () => {
+  // DELETE PRODUCT HANDLER (matches backend route /api/delete-product)
+  const handleDelete = async (productName) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+
     try {
-      const data = await apiFetch("/api/edit-product", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(`${BASE_URL}/api/delete-product`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
         body: JSON.stringify({
           shopId: shop._id,
-          oldProductName: editingProduct,
-          ...editedData,
+          productName,
         }),
       });
 
-      alert("Product updated successfully");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Delete failed");
+
+      alert("Product deleted successfully");
+
       setProducts(data.shop.products);
       shop.products = data.shop.products;
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete product");
+    }
+  };
+
+  // SAVE EDITED PRODUCT (matches backend route /api/edit-product)
+  const handleSave = async () => {
+    let finalImageURL = editedData.image_url;
+
+    try {
+      if (newImageFile) {
+        finalImageURL = await uploadImageFile(newImageFile);
+      }
+
+      const res = await fetch(`${BASE_URL}/api/edit-product`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          shopId: shop._id,
+          oldProductName: editingProduct,
+          productName: editedData.productName,
+          price: editedData.price,
+          image_url: finalImageURL,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Update failed");
+
+      alert("Product updated successfully");
+
+      setProducts(data.shop.products);
+      shop.products = data.shop.products;
+
       setEditingProduct(null);
     } catch (err) {
-      console.error("Error editing product:", err);
+      console.error("Edit error:", err);
       alert("Failed to update product");
+    }
+  };
+
+  // ADD TO CART (this route was already correct)
+  const addToCart = async (product) => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/add-to-cart`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          productName: product.productName,
+          image_url: product.image_url,
+          price: product.price,
+          shopId: shop._id,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to add");
+
+      alert("Product added to cart");
+    } catch (err) {
+      console.error("Add-to-cart error:", err);
     }
   };
     // const [addProduct, setAddProduct] = useState(false);
