@@ -1,70 +1,65 @@
-// import { useState } from "react"
-// import AddProduct from "./AddProduct"
-
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { apiFetch, API_BASE } from "../utils/api";
 
 export default function StoreProducts({ shop, logedIn, loginType, user }) {
   const [products, setProducts] = useState(shop.products || []);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [editedData, setEditedData] = useState({ productName: "", price: "", image_url: "" });
-const addToCart = async (product) => {
+  const [editedData, setEditedData] = useState({
+    productName: "",
+    price: "",
+    image_url: "",
+  });
+
+  // ✅ Add to cart (uses backend route from users.js)
+  const addToCart = async (product) => {
     if (!logedIn) {
       alert("Please login to add product");
       return;
     }
 
     try {
-      const res = await fetch("/api/add-to-cart", {
+      const data = await apiFetch("/api/add-to-cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userName: user.name,       // pass logged-in user's name
-          shopName: shop.shopName,   // since you identify shops by name
+          userName: user.name,
+          shopName: shop.shopName,
           productName: product.productName,
           price: product.price,
-          image_url: product.image_url
-        })
+          image_url: product.image_url,
+        }),
       });
 
-      const data = await res.json();
-      if (res.ok) {
-        alert("Added to cart successfully!");
-        console.log("Cart:", data);
-      } else {
-        alert(data.error || "Failed to add to cart");
-      }
+      alert("Added to cart successfully!");
+      console.log(data);
     } catch (err) {
-      console.error("Error adding to cart:", err);
-      alert("Something went wrong.");
+      console.error("Add to cart error:", err);
+      alert("Failed to add to cart");
     }
   };
 
-
-
+  // ❌ DELETE PRODUCT (correct URL + apiFetch)
   const handleDelete = async (productName) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    if (!window.confirm("Are you sure you want to delete this product?"))
+      return;
 
     try {
-      const res = await fetch("/api/delete-product", {
+      const data = await apiFetch("/api/delete-product", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ shopId: shop._id, productName }),
       });
 
-      const data = await res.json();
-      if (res.ok) {
-        alert("Product deleted successfully");
-        setProducts(data.shop.products);
-      } else {
-        alert(data.error || "Failed to delete product");
-      }
+      alert("Product deleted successfully");
+      setProducts(data.shop.products);
+      shop.products = data.shop.products; // keep UI consistent
     } catch (err) {
       console.error("Error deleting product:", err);
-      alert("Something went wrong.");
+      alert("Failed to delete product");
     }
   };
 
-  // ✏️ Edit Product
+  // ✏️ EDIT PRODUCT DATA
   const handleEdit = (product) => {
     setEditingProduct(product.productName);
     setEditedData({
@@ -74,10 +69,10 @@ const addToCart = async (product) => {
     });
   };
 
-  // 💾 Save Updated Product
+  // 💾 SAVE PRODUCT (correct URL + apiFetch)
   const handleSave = async () => {
     try {
-      const res = await fetch("/api/edit-product", {
+      const data = await apiFetch("/api/edit-product", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -87,17 +82,13 @@ const addToCart = async (product) => {
         }),
       });
 
-      const data = await res.json();
-      if (res.ok) {
-        alert("Product updated successfully");
-        setProducts(data.shop.products);
-        setEditingProduct(null);
-      } else {
-        alert(data.error || "Failed to update product");
-      }
+      alert("Product updated successfully");
+      setProducts(data.shop.products);
+      shop.products = data.shop.products;
+      setEditingProduct(null);
     } catch (err) {
       console.error("Error editing product:", err);
-      alert("Something went wrong.");
+      alert("Failed to update product");
     }
   };
     // const [addProduct, setAddProduct] = useState(false);
