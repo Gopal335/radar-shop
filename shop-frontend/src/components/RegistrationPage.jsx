@@ -1,5 +1,4 @@
-
- import { useState } from "react";
+import { useState } from "react";
 import { uploadImageFile } from "../utils/upload";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -14,22 +13,31 @@ export default function RegistrationPage({ setRegistrationPage }) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const validateFields = () => {
     const newErrors = {};
 
     if (role === "owner") {
       if (!shopName.trim()) newErrors.shopName = "Shop name is required";
+      if (shopName.length < 2) newErrors.shopName = "Shop name must be at least 2 characters long";
+
       if (!ownerName.trim()) newErrors.ownerName = "Owner name is required";
+      if (ownerName.length < 2) newErrors.ownerName = "Owner name must be at least 2 characters long";
+
       if (!email) newErrors.email = "Email is required";
       if (!phone) newErrors.phone = "Phone number is required";
+
       if (!password) newErrors.password = "Password is required";
       else if (password.length < 8)
         newErrors.password = "Password must be at least 8 characters long";
     } else {
       if (!name.trim()) newErrors.name = "Name is required";
+      if (name.length < 2) newErrors.name = "Name must be at least 2 characters long";
+
       if (!email) newErrors.email = "Email is required";
-      if (!phone) newErrors.phone = "Phone is required";
+      if (!phone) newErrors.phone = "Phone number is required";
+
       if (!password) newErrors.password = "Password is required";
       else if (password.length < 8)
         newErrors.password = "Password must be at least 8 characters long";
@@ -41,32 +49,23 @@ export default function RegistrationPage({ setRegistrationPage }) {
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    setErrors({});
     if (!validateFields()) return;
 
+    setLoading(true);
     try {
+      // Upload image first (if provided). uploadImageFile returns a string URL.
       let uploadedImageUrl = "";
-
       if (imageFile) {
         uploadedImageUrl = await uploadImageFile(imageFile);
       }
 
-      let endpoint = "";
-      let body = {};
-
-      if (role === "owner") {
-        endpoint = "/api/register";
-        body = {
-          shopName,
-          ownerName,
-          email,
-          phone,
-          image_url: uploadedImageUrl,
-          password,
-        };
-      } else {
-        endpoint = "/api/register-user";
-        body = { name, email, phone, password };
-      }
+      // Build endpoint & body according to your backend routes (unchanged)
+      const endpoint = role === "owner" ? "/api/register" : "/api/register-user";
+      const body =
+        role === "owner"
+          ? { shopName, ownerName, email, phone, image_url: uploadedImageUrl, password }
+          : { name, email, phone, password };
 
       const res = await fetch(BASE_URL + endpoint, {
         method: "POST",
@@ -75,14 +74,25 @@ export default function RegistrationPage({ setRegistrationPage }) {
         body: JSON.stringify(body),
       });
 
-      const data = await res.json();
+      // try to parse json (backend returns JSON even on errors)
+      const text = await res.text().catch(() => null);
+      let data = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        // non-json response
+        throw new Error(`Unexpected response from server: ${text}`);
+      }
 
       if (!res.ok) {
-        setErrors({ server: data.message || "Registration failed" });
+        // show backend message if present
+        const msg = data.message || data.error || `Registration failed (status ${res.status})`;
+        setErrors({ server: msg });
+        setLoading(false);
         return;
       }
 
-      // reset all
+      // success -> reset and close registration UI
       setShop("");
       setOwner("");
       setPassword("");
@@ -91,12 +101,12 @@ export default function RegistrationPage({ setRegistrationPage }) {
       setPhone("");
       setImageFile(null);
       setErrors({});
-
+      setLoading(false);
       setRegistrationPage();
-
     } catch (err) {
       console.error("Registration error:", err);
-      setErrors({ server: "Network or server error" });
+      setErrors({ server: err.message || "Network or server error" });
+      setLoading(false);
     }
   };
 
