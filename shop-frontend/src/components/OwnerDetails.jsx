@@ -1,56 +1,74 @@
 import { useState } from "react";
-import StoreProducts from "./StoreProducts";
 import { apiFetch } from "../utils/api";
+import StoreProducts from "./StoreProducts";
 
 export default function OwnerDetails({ shop, setOwnerIcon }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [updatedShop, setUpdatedShop] = useState(shop);
+
+  // Remove hashed password from UI
+  const [updatedShop, setUpdatedShop] = useState({
+    ...shop,
+    password: ""
+  });
+
   const [loading, setLoading] = useState(false);
 
   if (!shop) return null;
 
-  // input handler
+  // Handle input change
   const handleChange = (e) => {
     setUpdatedShop({ ...updatedShop, [e.target.name]: e.target.value });
   };
 
-  // fetch fresh shop details (GET /find-owner)
+  // Fetch latest owner details
   const fetchLatestShop = async () => {
     try {
-      const allOwners = await apiFetch(`/api/find-owner`, { method: "GET" });
+      const owners = await apiFetch("/api/find-owner", { method: "GET" });
 
-      const freshShop = allOwners.find((o) => o._id === shop._id);
-      if (freshShop) setUpdatedShop(freshShop);
+      const freshShop = owners.find((o) => o._id === shop._id);
+
+      if (freshShop) {
+        setUpdatedShop({ ...freshShop, password: "" });
+      }
     } catch (err) {
-      console.error("Error fetching latest owner:", err);
+      console.error("Fetch latest shop error:", err);
     }
   };
 
-  // Save edited owner/shop details (PUT /edit-owner)
+  // Save edits
   const handleEditSubmit = async () => {
     try {
       setLoading(true);
 
-      const data = await apiFetch(`/api/edit-owner`, {
+      const body = {
+        ownerId: shop._id,
+        shopName: updatedShop.shopName,
+        ownerName: updatedShop.ownerName,
+        email: updatedShop.email,
+        phone: updatedShop.phone,
+        image_url: updatedShop.image_url,
+      };
+
+      // Only send password if user typed something
+      if (updatedShop.password.trim() !== "") {
+        body.password = updatedShop.password;
+      }
+
+      const data = await apiFetch("/api/edit-owner", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ownerId: shop._id,
-          shopName: updatedShop.shopName,
-          ownerName: updatedShop.ownerName,
-          email: updatedShop.email,
-          phone: updatedShop.phone,
-          image_url: updatedShop.image_url,
-          password: updatedShop.password,
-        }),
+        body: JSON.stringify(body),
       });
 
-      alert("Shop updated successfully!");
+      alert("Owner updated successfully!");
+
+      // Backend returns { owner }
+      setUpdatedShop({ ...data.owner, password: "" });
+
       setIsEditing(false);
-      setUpdatedShop(data.owner);
     } catch (err) {
-      console.error("Error updating owner:", err);
-      alert("Failed to update owner details.");
+      console.error("Update owner error:", err);
+      alert("Error updating owner: " + err.body || err.message);
     } finally {
       setLoading(false);
     }
