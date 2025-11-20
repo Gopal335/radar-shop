@@ -1,52 +1,72 @@
 import { useState } from "react";
 import { uploadImageFile } from "../utils/upload";
-export default function AddProduct({goBack, shopId}){
 
-    const [image_url, setImageUrl] = useState("");
-     const [imageFile, setImageFile] = useState(null);
+const BASE_URL = import.meta.env.VITE_API_URL || "";
+
+export default function AddProduct({ goBack, shopId }) {
+  const [imageFile, setImageFile] = useState(null);
+  const [image_url, setImageUrl] = useState("");
   const [price, setPrice] = useState("");
   const [productName, setProductName] = useState("");
 
+  const productHandler = async (e) => {
+    e.preventDefault();
 
-  
-    const productHandler = async (e) => {
-        e.preventDefault();
+    if (!productName.trim() || !price.trim()) {
+      alert("Product name and price are required");
+      return;
+    }
 
     try {
-       let image_url_to_send = image_url;
+      // Final URL to send
+      let image_url_to_send = image_url;
+
+      // If file selected → upload to Cloudinary
       if (imageFile) {
         try {
-          image_url_to_send = await uploadImageFile(imageFile);
+          image_url_to_send = await uploadImageFile(imageFile); // RETURNS STRING
         } catch (upErr) {
           console.error("Image upload failed:", upErr);
           alert("Image upload failed");
           return;
         }
       }
-      const res = await fetch("/api/add-product", {
+
+      // POST to backend route (must use BASE_URL!)
+      const res = await fetch(`${BASE_URL}/api/add-product`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
-         shopId,
+          shopId,
           productName,
           price,
           image_url: image_url_to_send,
         }),
       });
 
-      const data = await res.json();
-      
-       setImageUrl("");
-       setImageFile(null);
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("Add product failed:", errText);
+        alert("Failed to add product");
+        return;
+      }
+
+      // Clear fields
+      setImageUrl("");
+      setImageFile(null);
       setPrice("");
       setProductName("");
+
       goBack();
     } catch (err) {
       console.error("Error adding product:", err);
+      alert("Server error");
     }
   };
+
 
     return(
         <>
