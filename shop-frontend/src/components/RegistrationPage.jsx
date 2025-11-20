@@ -1,112 +1,64 @@
 import { useState } from "react";
 import { uploadImageFile } from "../utils/upload";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
-export default function RegistrationPage({ setRegistrationPage }) {
-  const [role, setRole] = useState("owner");
-  const [shopName, setShop] = useState("");
-  const [ownerName, setOwner] = useState("");
-  const [password, setPassword] = useState("");
+export default function AddProduct({ goBack, shopId }) {
   const [imageFile, setImageFile] = useState(null);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [productName, setProductName] = useState("");
+  const [price, setPrice] = useState("");
 
-  const validateFields = () => {
-    const newErrors = {};
+  const productHandler = async (e) => {
+    e.preventDefault();
 
-    if (role === "owner") {
-      if (!shopName.trim()) newErrors.shopName = "Shop name is required";
-      if (shopName.length < 2) newErrors.shopName = "Shop name must be at least 2 characters long";
-
-      if (!ownerName.trim()) newErrors.ownerName = "Owner name is required";
-      if (ownerName.length < 2) newErrors.ownerName = "Owner name must be at least 2 characters long";
-
-      if (!email) newErrors.email = "Email is required";
-      if (!phone) newErrors.phone = "Phone number is required";
-
-      if (!password) newErrors.password = "Password is required";
-      else if (password.length < 8)
-        newErrors.password = "Password must be at least 8 characters long";
-    } else {
-      if (!name.trim()) newErrors.name = "Name is required";
-      if (name.length < 2) newErrors.name = "Name must be at least 2 characters long";
-
-      if (!email) newErrors.email = "Email is required";
-      if (!phone) newErrors.phone = "Phone number is required";
-
-      if (!password) newErrors.password = "Password is required";
-      else if (password.length < 8)
-        newErrors.password = "Password must be at least 8 characters long";
+    if (!productName.trim() || !price.trim()) {
+      alert("Product name and price are required");
+      return;
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    let image_url = "";
 
-  const submitHandler = async (e) => {
-    e.preventDefault();
-    setErrors({});
-    if (!validateFields()) return;
-
-    setLoading(true);
-    try {
-      // Upload image first (if provided). uploadImageFile returns a string URL.
-      let uploadedImageUrl = "";
-      if (imageFile) {
-        uploadedImageUrl = await uploadImageFile(imageFile);
+    // Upload image if selected
+    if (imageFile) {
+      try {
+        image_url = await uploadImageFile(imageFile);
+      } catch (err) {
+        console.error("Image upload failed:", err);
+        alert("Image upload failed");
+        return;
       }
+    }
 
-      // Build endpoint & body according to your backend routes (unchanged)
-      const endpoint = role === "owner" ? "/api/register" : "/api/register-user";
-      const body =
-        role === "owner"
-          ? { shopName, ownerName, email, phone, image_url: uploadedImageUrl, password }
-          : { name, email, phone, password };
-
-      const res = await fetch(BASE_URL + endpoint, {
+    // Send product to backend
+    try {
+      const res = await fetch(`${BASE_URL}/api/add-product`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          shopId,
+          productName,
+          price,
+          image_url,
+        }),
       });
 
-      // try to parse json (backend returns JSON even on errors)
-      const text = await res.text().catch(() => null);
-      let data = {};
-      try {
-        data = text ? JSON.parse(text) : {};
-      } catch {
-        // non-json response
-        throw new Error(`Unexpected response from server: ${text}`);
-      }
+      const text = await res.text();
 
       if (!res.ok) {
-        // show backend message if present
-        const msg = data.message || data.error || `Registration failed (status ${res.status})`;
-        setErrors({ server: msg });
-        setLoading(false);
+        console.error("Add product failed:", text);
+        alert("Failed to add product");
         return;
       }
 
-      // success -> reset and close registration UI
-      setShop("");
-      setOwner("");
-      setPassword("");
-      setName("");
-      setEmail("");
-      setPhone("");
+      // Clear fields
+      setProductName("");
+      setPrice("");
       setImageFile(null);
-      setErrors({});
-      setLoading(false);
-      setRegistrationPage();
+
+      goBack();
     } catch (err) {
-      console.error("Registration error:", err);
-      setErrors({ server: err.message || "Network or server error" });
-      setLoading(false);
+      console.error("Error adding product:", err);
+      alert("Server error");
     }
   };
 
