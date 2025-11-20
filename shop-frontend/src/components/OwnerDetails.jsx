@@ -1,38 +1,37 @@
 import { useState } from "react";
 import StoreProducts from "./StoreProducts";
+import { apiFetch } from "../utils/api";
 
 export default function OwnerDetails({ shop, setOwnerIcon }) {
   const [isEditing, setIsEditing] = useState(false);
   const [updatedShop, setUpdatedShop] = useState(shop);
   const [loading, setLoading] = useState(false);
 
-  if (!shop) return null; // safety check
+  if (!shop) return null;
 
-  // Handle edit field changes
+  // input handler
   const handleChange = (e) => {
     setUpdatedShop({ ...updatedShop, [e.target.name]: e.target.value });
   };
 
-  // Fetch latest details for this owner before editing
+  // fetch fresh shop details (GET /find-owner)
   const fetchLatestShop = async () => {
     try {
-      const res = await fetch("/api/find-owner", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      const allOwners = await res.json();
+      const allOwners = await apiFetch(`/api/find-owner`, { method: "GET" });
+
       const freshShop = allOwners.find((o) => o._id === shop._id);
       if (freshShop) setUpdatedShop(freshShop);
     } catch (err) {
-      console.error("Error fetching latest shop:", err);
+      console.error("Error fetching latest owner:", err);
     }
   };
 
-  // Submit updated shop details
+  // Save edited owner/shop details (PUT /edit-owner)
   const handleEditSubmit = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/edit-owner", {
+
+      const data = await apiFetch(`/api/edit-owner`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -45,23 +44,18 @@ export default function OwnerDetails({ shop, setOwnerIcon }) {
           password: updatedShop.password,
         }),
       });
-      
 
-      const data = await res.json();
-      if (res.ok) {
-        alert("Shop details updated successfully!");
-        setIsEditing(false);
-        setUpdatedShop(data.owner);
-      } else {
-        alert("Error: " + (data.error || data.message));
-      }
+      alert("Shop updated successfully!");
+      setIsEditing(false);
+      setUpdatedShop(data.owner);
     } catch (err) {
       console.error("Error updating owner:", err);
-      alert("Failed to update shop details.");
+      alert("Failed to update owner details.");
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 relative overflow-hidden">

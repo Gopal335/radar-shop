@@ -1,35 +1,44 @@
 import { useState } from "react";
+import { apiFetch } from "../utils/api";
 
 export default function UserDetails({ user, setUserIcon, setUser }) {
   const [editing, setEditing] = useState(false);
+
   const [editedData, setEditedData] = useState({
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
-    password: user.password
+    name: user.name || "",
+    email: user.email || "",
+    phone: user.phone || "",
+    password: ""   // 🔥 never put existing password here — backend hashes only new password
   });
 
-  // 💾 Save updated user
+  // SAVE UPDATED USER DETAILS
   const handleSave = async () => {
     try {
-      const res = await fetch("/api/edit-user", {
+      const payload = {
+        userId: user._id,
+        name: editedData.name,
+        email: editedData.email,
+        phone: editedData.phone,
+      };
+
+      // Only include password if user entered something new
+      if (editedData.password.trim() !== "") {
+        payload.password = editedData.password;
+      }
+
+      const data = await apiFetch("/api/edit-user", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user._id, ...editedData }),
+        body: JSON.stringify(payload)
       });
-      const data = await res.json();
 
-      if (res.ok) {
-        alert("User details updated successfully!");
-        setUser(data.user); // Update parent state
-        setEditing(false);
-        
-      } else {
-        alert(data.error || "Failed to update user details");
-      }
+      alert("User details updated successfully!");
+      setUser(data.user);          // update parent state
+      setEditing(false);
+
     } catch (err) {
       console.error("Error updating user:", err);
-      alert("Something went wrong.");
+      alert("Failed to update user details");
     }
   };
 
