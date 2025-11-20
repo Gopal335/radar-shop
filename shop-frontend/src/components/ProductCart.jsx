@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiFetch, API_BASE } from "../utils/api";
 
 function Cart({ user }) {
   const [cart, setCart] = useState(null);
@@ -9,13 +10,11 @@ function Cart({ user }) {
 
     async function fetchCart() {
       try {
-        const res = await fetch(`/api/get-cart/${user.name}`);
-        if (!res.ok) throw new Error("Failed to fetch cart");
+        const data = await apiFetch(`/api/get-cart/${user.name}`, {
+          method: "GET",
+        });
 
-        const data = await res.json();
-        console.log("Cart data:", data);
-
-        if (!data.shops || data.shops.length === 0) {
+        if (!data.shops) {
           setCart({ shops: [] });
         } else {
           setCart(data);
@@ -31,34 +30,18 @@ function Cart({ user }) {
     fetchCart();
   }, [user]);
 
-  if (loading)
-    return (
-      <div className="flex justify-center items-center h-screen text-xl text-white">
-        Your cart is loading...
-      </div>
-    );
-
-  if (!cart || cart.shops.length === 0)
-    return (
-      <div className="flex justify-center items-center h-screen text-lg text-white">
-        Your cart is empty.
-      </div>
-    );
-
-    const removeProduct = async (shopName, productName) => {
+  const removeProduct = async (shopName, productName) => {
     try {
-      const res = await fetch(`/api/remove-from-cart`, {
+      const data = await apiFetch(`/api/remove-from-cart`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userName: user.name, shopName, productName }),
+        body: JSON.stringify({
+          userName: user.name,
+          shopName,
+          productName,
+        }),
       });
 
-      if (!res.ok) throw new Error("Failed to remove product");
-
-      const data = await res.json();
-      console.log("Updated cart:", data.cart);
-
-      // ✅ Update frontend instantly
       setCart(data.cart);
     } catch (err) {
       console.error("Error removing product:", err);
@@ -79,7 +62,6 @@ function Cart({ user }) {
         Your cart is empty.
       </div>
     );
-
     
 
   return (
