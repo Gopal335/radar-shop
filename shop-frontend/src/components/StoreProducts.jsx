@@ -14,7 +14,7 @@ export default function StoreProducts({ shop, logedIn, loginType, user }) {
   const [newImageFile, setNewImageFile] = useState(null);
 
   // Begin editing UI
-  const handleEditStart = (product) => {
+  const handleEdit = (product) => {
     setEditingProduct(product.productName);
     setEditedData({
       productName: product.productName,
