@@ -13,6 +13,7 @@ const corsOptions = {
   origin: [
     "https://radar-shop-app.vercel.app",
     "https://radar-shop-6wlhsvknp-gopals-projects-ecd583d1.vercel.app",
+    "https://radar-shop-q3o3byf12-gopals-projects-ecd583d1.vercel.app",
     "http://localhost:5173"
   ],
   credentials: true,
