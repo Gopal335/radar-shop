@@ -11,7 +11,7 @@ connectDB();
 
 const corsOptions = {
   origin: [
-    "https://radar-backend.vercel.app",
+    "https://radar-shop-app.vercel.app",
     "https://radar-shop-6wlhsvknp-gopals-projects-ecd583d1.vercel.app",
     "http://localhost:5173"
   ],
